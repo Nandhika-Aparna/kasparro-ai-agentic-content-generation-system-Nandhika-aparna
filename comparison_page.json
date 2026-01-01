@@ -1,0 +1,19 @@
+{
+    "title": "GlowBoost Vitamin C Serum vs Radiant-C Premium",
+    "price_comparison": {
+        "GlowBoost Vitamin C Serum": 699,
+        "Radiant-C Premium": 1299,
+        "savings": 600
+    },
+    "ingredient_analysis": {
+        "shared": [
+            "vitamin c"
+        ],
+        "unique_to_product": [
+            "hyaluronic acid"
+        ],
+        "missing_actives": [
+            "ferulic acid"
+        ]
+    }
+}
