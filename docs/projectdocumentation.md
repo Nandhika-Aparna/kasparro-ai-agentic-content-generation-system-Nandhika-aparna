@@ -2,85 +2,85 @@ Project Documentation: GlowBoost Multi-Agent Content Generation System
 
 1. Problem Statement
 
-In modern e-commerce and dermatological technology, manual content creation for product catalogs is a bottleneck that scales poorly and is prone to human error or "hallucinated" marketing claims. Traditional automated systems often rely on monolithic scripts that lack flexibility, factual grounding, and the ability to handle complex reasoning—such as competitive analysis or safety risk mitigation.
+In modern e-commerce, manual content creation is a bottleneck that scales poorly and is prone to human error or "hallucinated" marketing claims. Traditional automated systems often rely on monolithic scripts that lack flexibility and factual grounding.
 
-The challenge is to build a system that can take a minimal set of raw product attributes (Source of Truth) and autonomously generate a multi-page, structured content suite (FAQ, Product Page, and Comparison Analysis) while maintaining 100% factual integrity and architectural modularity.
+The challenge is to build a system that takes raw product attributes (Source of Truth) and autonomously generates a multi-page, structured content suite (FAQ, Product Page, and Comparison Analysis) while maintaining 100% factual integrity and architectural modularity.
 
 2. Solution Overview
 
-The GlowBoost Multi-Agent System is a decentralized agentic pipeline designed to transform raw product data into a high-conversion, machine-readable content ecosystem.
+The GlowBoost Multi-Agent System is a decentralized, autonomous agentic environment designed to transform raw product data into a high-conversion content ecosystem.
 
-Instead of a single execution block, the solution employs a "State-Sharing Orchestration" pattern. The system breaks down the content lifecycle into three distinct cognitive phases:
+Instead of a hard-coded sequential script, this solution employs a Dynamic Coordination Loop (Convergence Pattern). The system utilizes three independent agents that interact through a shared state:
 
-Inquiry Generation (The Inquisitor): Simulating customer personas to expand raw data into 15+ high-intent queries.
+The Inquisitor: Simulates customer personas to expand raw data into 15+ high-intent queries.
 
-Fact-Checking & Grounding (The Researcher): Cross-referencing queries against a Pydantic-validated "Source of Truth" to ensure zero hallucinations.
+The Researcher: Autonomously grounds and verifies data against the Pydantic-validated "Source of Truth."
 
-Content Synthesis (The Composer): Transforming validated data points into structured JSON templates using reusable logic blocks.
-
-This modular approach ensures that each stage of the pipeline can be scaled, tested, and audited independently.
+The Composer: Assembles final structured JSON artifacts using reusable logic blocks and templates.
 
 3. Scopes & Assumptions
 
 Scope
 
-Data Validation: Strict type-enforcement using Pydantic models.
+Autonomous Coordination: Agents decide when to act based on environmental triggers.
 
-Persona Simulation: Automated generation of Categorized Questions (Safety, Usage, Value, etc.).
+Data Validation: Strict type-enforcement using Pydantic models.
 
 Competitive Intelligence: Programmatic comparison between a primary product and synthetic competitors.
 
-Safety Guardrails: Automatic detection of medical keywords and insertion of required disclaimers.
-
-Output: Production-ready, machine-readable JSON files.
+Output: Machine-readable JSON files (faq.json, product_page.json, comparison_page.json).
 
 Assumptions
 
-Closed Knowledge Base: The system operates under a "Zero-Knowledge" external assumption, utilizing only provided data to prevent unauthorized medical claims.
+Closed Knowledge Base: The system uses only provided data to prevent unauthorized claims.
 
-Sequential Execution: While agents are logically independent, the current implementation follows a linear Directed Acyclic Graph (DAG) for state consistency.
+Convergence: The pipeline is considered complete when all agents report no further work to perform.
 
-Consumer Safety: It is assumed that "Side Effects" data provided in the source is the absolute limit of safety information available to the system.
+Zero-Knowledge External: No external research is performed to ensure compliance with the provided dataset.
 
-4. System Design (Mandatory)
+4. System Design
 
-4.1 Architectural Pattern: Orchestrator-Worker
+4.1 Architectural Pattern: Dynamic Orchestration (Blackboard)
 
-The system utilizes a Message-Passing Orchestrator pattern. A central AgenticState object acts as the "Environment" or "Blackboard" where agents read and write data.
+The system moves beyond a standard Directed Acyclic Graph (DAG) to a Blackboard Architecture:
 
-The Shared State: Every agent receives the current AgenticState. They do not communicate with each other directly; they only modify the state. This decouples the "Inquisitor" from the "Composer," allowing for asynchronous or parallel processing.
+The Shared State (AgenticState): Acts as the central environment. Agents monitor this state and act when specific conditions are met.
 
-Pydantic Data Contracts: To prevent "state drift," every data object (Product, Question, State) is governed by a Pydantic model. This ensures that if one agent produces malformed data, the pipeline halts immediately rather than propagating errors.
+Agent Autonomy: Each agent implements a can_process() sensor. The Orchestrator does not "call" agents in a fixed order; it hosts a loop where agents autonomously take control when they detect relevant work.
 
 4.2 Reusable Logic Blocks
 
-To satisfy the requirement for composable engineering, content transformation is moved into "Pure Functions" within logic_blocks.py:
+Transformation rules are encapsulated in "Pure Functions" within logic_blocks.py:
 
-Benefits Transformer: Converts raw strings into high-conversion marketing bullets.
+Benefits Transformer: Maps product benefits to marketing-optimized bullets.
 
-Ingredient Clash Logic: Performs set-intersection analysis to determine shared vs. unique active ingredients between products.
+Comparison Logic: Programmatically determines price deltas and unique ingredient propositions.
 
-Protocol Merger: Combines usage steps with safety warnings to create a cohesive "Application Protocol."
+Protocol Extractor: Merges usage steps and safety warnings into a coherent protocol.
 
 4.3 Template Engine Design
 
-The templates are defined as Structured JSON Schemas rather than string literals.
+Templates are defined as structured schemas within the ComposerAgent. This allows for:
 
-Dynamic Mapping: The ComposerAgent maps grounded data points into specific keys within the final output dictionary.
+Consistency: Ensures every JSON output follows a predictable, machine-readable structure.
 
-Machine-Readability: By outputting JSON, the system supports headless CMS integration, mobile apps, and dynamic web components simultaneously.
+Modularity: Formatting rules are decoupled from the raw data gathering process.
 
-4.4 The Agentic Pipeline Flow (Sequence)
+4.4 The Agentic Pipeline Flow (Convergence)
 
-Initialization: main.py validates the raw JSON and populates the SystemState.
+Validation: The Orchestrator initializes the AgenticState and validates raw inputs.
 
-Expansion: InquisitorAgent generates 15+ questions across 5 categories based on product attributes.
+The Autonomous Loop:
 
-Verification: ResearcherAgent scans the ProductModel to provide answers and attaches an is_grounded flag.
+Inquisitor detects empty question sets and populates inquiries.
 
-Composition: ComposerAgent calls logic blocks to assemble the final FAQ, product page, and comparison objects.
+Researcher detects unverified questions and applies grounding logic.
 
-Export: The Orchestrator flushes the state to distinct JSON files.
+Composer detects a completed knowledge base and assembles the final pages.
+
+Termination: The loop breaks once all agents return False for their activation triggers.
+
+Export: Final artifacts are flushed to the local file system.
 
 5. Visual Representation
 
@@ -88,29 +88,31 @@ System Architecture Flow
 
 [ Raw Data ] --> [ Pydantic Validator ] 
                  |
-         [ AgenticState (Blackboard) ]
-                 |
-         ------------------------------------------
-         |                |               |
-  [Inquisitor]  -->  [Researcher] --> [Composer]
-  (15+ Queries)      (Grounding)      (Templates)
-         |                |               |
-         ------------------------------------------
-                 |
-         [ Content Output ]
-    (FAQ.json | Product.json | Comp.json)
+         [ AgenticState (Blackboard) ] <-----------------------
+                 |                                            |
+         ------------------------------------------           |
+         |                |               |               |
+  [Inquisitor]     [Researcher]    [Composer]      [Audit Log]
+  (Ideation)       (Grounding)     (Synthesis)     (Tracking)
+         |                |               |               |
+         ------------------------------------------           |
+                 |                                            |
+                 ----------------------------------------------
+                                 |
+                        [ Content Output ]
+            (faq.json | product_page.json | comparison_page.json)
 
 
-Logical Sequence Diagram
+Logical Sequence (Autonomous)
 
-Trigger: System executes run_pipeline.py.
+Trigger: orchestrator.run_pipeline() starts.
 
-Load: Orchestrator loads GlowBoost data into AgenticState.
+Observation: Agents poll the AgenticState.
 
-Inquire: Inquisitor reads State -> Appends 15+ Question objects.
+Action: Inquisitor acts first as its trigger (empty questions) is met.
 
-Research: Researcher reads State -> Maps Questions to Product attributes -> Appends Grounded Answers.
+Reaction: Researcher observes the new questions and begins verification.
 
-Compose: Composer reads Grounded Data -> Executes Logic Blocks -> Populates Page Templates.
+Finalization: Composer observes that len(grounded_data) == len(questions) and triggers assembly.
 
-Deliver: Orchestrator writes results to local JSON files.
+Delivery: Orchestrator writes the final_pages map to JSON files.

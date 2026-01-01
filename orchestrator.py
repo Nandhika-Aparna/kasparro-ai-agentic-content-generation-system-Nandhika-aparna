@@ -1,13 +1,7 @@
-"""
-KASPARRO ORCHESTRATOR
-Manages the shared state and coordinates independent agents.
-Supports switching between LIVE API and MOCK MODE for development.
-"""
 import json
 import os
 from models import Product, AgenticState
-from agents import InquisitorAgent
-from agents import ResearcherAgent, ComposerAgent
+from agents import InquisitorAgent, ResearcherAgent, ComposerAgent
 from dotenv import load_dotenv
 
 # Load environment variables (API Key)
@@ -20,73 +14,76 @@ USE_MOCK = True
 
 class KasparroOrchestrator:
     def __init__(self, raw_data: dict, competitor_data: dict):
-        # Initialize Shared State
         self.state = AgenticState(raw_input=raw_data)
         self.raw_competitor = competitor_data
         
-        # Initialize Agents
-        # Note: We use a try-except block here to handle cases where 
-        # agent_inquisitor.py hasn't been updated with the use_mock parameter yet.
-        try:
-            inquisitor = InquisitorAgent(use_mock=USE_MOCK)
-        except TypeError:
-            print("⚠️ Warning: InquisitorAgent class does not yet support 'use_mock' parameter.")
-            print("Falling back to default initialization.")
-            inquisitor = InquisitorAgent()
-
+        # Modular Agent Registration: These agents operate independently
+        # Note: If agents are updated to use LLMs, pass USE_MOCK to them here.
         self.agents = [
-            inquisitor,
-            ResearcherAgent(),
+            InquisitorAgent(), 
+            ResearcherAgent(), 
             ComposerAgent()
         ]
 
     def run_pipeline(self):
+        """
+        Implements an Autonomous Coordination Loop.
+        Instead of static sequential logic, agents monitor the shared state 
+        and execute based on internal autonomy logic (can_process).
+        """
         mode_label = "MOCK MODE (No API usage)" if USE_MOCK else "LIVE API MODE"
         print(f"--- Starting Agentic Orchestration [{mode_label}] ---")
         
-        # Step 1: Initialize and validate product models via Pydantic
+        # Initial Validation: Converting raw input to clean internal Pydantic models
         try:
             self.state.product_model = Product(**self.state.raw_input)
             self.state.competitor_model = Product(**self.raw_competitor)
-            self.state.logs.append(f"State initialized for {self.state.product_model.name}")
+            self.state.logs.append(f"Models validated for {self.state.product_model.name}")
         except Exception as e:
             print(f"❌ Validation Error: {e}")
             return
-        
-        # Step 2: Agent Processing
-        # Agents update self.state autonomously
-        for agent in self.agents:
-            agent_name = agent.__class__.__name__
-            print(f"🤖 Agent [{agent_name}] is processing...")
+
+        # DYNAMIC CONVERGENCE LOOP
+        # This replaces static control flow with dynamic orchestration.
+        # The system continues to iterate until no agent has further work to perform.
+        max_iterations = 10
+        for i in range(max_iterations):
+            work_done_this_round = False
             
-            # For the InquisitorAgent, we call generate_questions as per its specific implementation
-            # This ensures compatibility between the specialized Inquisitor and generic Workers
-            if hasattr(agent, 'generate_questions'):
-                self.state.questions = agent.generate_questions(self.state.product_model)
-            else:
-                agent.process(self.state)
-                
-            self.state.logs.append(f"{agent_name} processing complete.")
+            for agent in self.agents:
+                # Agent Autonomy: The agent decides if it should act based on the environment
+                if agent.can_process(self.state):
+                    print(f"🤖 Agent [{agent.__class__.__name__}] is taking control...")
+                    agent.process(self.state)
+                    work_done_this_round = True
             
-        # Step 3: Export 3 JSON Files (Machine-Readable Artifacts)
+            # If no agent acted, the system has reached its goal state
+            if not work_done_this_round:
+                print("🏁 No more agents require processing. Pipeline converged.")
+                break
+
+        self.export_artifacts()
+
+    def export_artifacts(self):
+        """Standardized JSON export for machine-readable results."""
         print("\n💾 Exporting generated pages...")
         for page_name, content in self.state.final_pages.items():
-            filename = f"{page_name}.json"
-            try:
-                with open(filename, "w", encoding="utf-8") as f:
-                    # ensure_ascii=False handles the Rupee (₹) symbol correctly
-                    json.dump(content, f, indent=4, ensure_ascii=False)
-                print(f"✔️ Generated: {filename}")
-            except Exception as e:
-                print(f"❌ Error exporting {filename}: {e}")
+            if content:
+                filename = f"{page_name}.json"
+                try:
+                    with open(filename, "w", encoding="utf-8") as f:
+                        json.dump(content, f, indent=4, ensure_ascii=False)
+                    print(f"✔️ Exported: {filename}")
+                except Exception as e:
+                    print(f"❌ Error exporting {filename}: {e}")
 
-        # Step 4: Final Audit Trail
+        # Final Audit Trail
         print("\n--- System Audit Trail ---")
         for log in self.state.logs:
             print(f"✅ {log}")
 
 if __name__ == "__main__":
-    # Primary product data
+    # Primary product data (Requirement #1)
     glow_boost_dataset = {
         "name": "GlowBoost Vitamin C Serum",
         "concentration": "10% Vitamin C",
@@ -98,7 +95,7 @@ if __name__ == "__main__":
         "price_in_inr": 699
     }
     
-    # Competitor data for comparison logic
+    # Fictional Product B for Comparison Page (Requirement #5)
     radiant_c_dataset = {
         "name": "Radiant-C Premium",
         "concentration": "15% Vitamin C",
@@ -110,6 +107,6 @@ if __name__ == "__main__":
         "price_in_inr": 1299
     }
     
-    # Run the system
+    # Initialize and execute the autonomous system
     orchestrator = KasparroOrchestrator(glow_boost_dataset, radiant_c_dataset)
     orchestrator.run_pipeline()
