@@ -36,7 +36,7 @@ Run the primary pipeline to process raw product data and generate the JSON ecosy
 
 python orchestrator.py
 
-The output will be generated in the /output directory:
+The output will be generated in the directory:
 
 * FAQ.json: Grounded Q\&A for customer support.  
 * ProductPage.json: High-conversion product descriptions.  
